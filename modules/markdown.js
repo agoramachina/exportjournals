@@ -39,7 +39,7 @@ export class ExportAsMarkdown {
         
         for (let page of journal.pages) {
             let content = foundry.utils.getProperty(page, 'text.content');
-            if (!content) return '';
+            if (!content) continue;
 
             if (formData.enrich) {
                 content = await TextEditor.enrichHTML(content)
