@@ -1,0 +1,25 @@
+<div>
+    <form class="standard-form">
+        <div class="form-group">
+            <label>{{localize 'exportJournals.enrich'}}</label>
+            <div class="form-fields">
+                <input type="checkbox" name="enrich" checked>
+            </div>
+            <p class="hint">{{localize 'exportJournals.enrichHint'}}</p>
+        </div>
+        <div class="form-group">
+            <label>{{localize 'exportJournals.removeLinks'}}</label>
+            <div class="form-fields">
+                <input type="checkbox" name="removeLinks" checked>
+            </div>
+            <p class="hint">{{localize 'exportJournals.removeLinksHint'}}</p>
+        </div>
+        <p>{{localize 'exportJournals.note'}}</p>
+        <code class="progress" style="overflow: scroll;">
+        </code>
+        <div class="flexrow">
+            <button type="button" data-action="exportMarkdown"><i class="fas fa-markdown"></i> {{localize 'exportJournals.exportMarkdown'}}</button>
+            <button type="button" data-action="exportPDF"><i class="fas fa-file-pdf"></i> {{localize 'exportJournals.exportPDF'}}</button>
+        </div>
+    </form>
+</div>

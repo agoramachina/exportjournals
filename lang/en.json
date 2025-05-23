@@ -1,0 +1,11 @@
+{
+    "exportJournals": {
+        "exportPDF": "Export as PDF",
+        "exportMarkdown": "Export as Markdown",
+        "enrich": "Enrich",
+        "enrichHint": "Apply Foundry Enricher (links, embeds, etc.)",
+        "removeLinks": "Remove links",
+        "removeLinksHint": "Remove all links from the export.",
+        "note": "Large compendiums may take a while for PDF, please be patient."
+    }
+}
