@@ -9,6 +9,8 @@
         "convertLinks": "Links konvertieren",
         "keepLinks": "Links behalten",
         "linkHandling": "Linkbehandlung",
-        "note": "Große Kompendien können bei PDF eine Weile dauern, Geduld bitte."
+        "note": "Große Kompendien können bei PDF eine Weile dauern, Geduld bitte.",
+        "withImages": "Mit Bildern",
+        "withImagesHint": "Bilder in den Export einfügen (nur Markdown)"
     }
 }

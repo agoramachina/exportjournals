@@ -7,7 +7,7 @@ export class ExportAsPDF {
         const folders = { none: []}
 
         for (const folder of Array.from(pack.folders).sort((a, b) => a.sort ?? 0 - b.sort ?? 0)) {
-            for (let doc of allDocs.filter(d => d.folder === folder.id)) {
+            for (let doc of allDocs.filter(d => d.folder === folder)) {
                 const pages = await this.convertJournalToHTML(doc, formData);
 
                 // Add document title page

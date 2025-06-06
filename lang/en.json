@@ -9,6 +9,8 @@
         "convertLinks": "Convert links",
         "keepLinks": "Keep links",
         "linkHandling": "Link handling",
-        "note": "Large compendiums may take a while for PDF, please be patient."
+        "note": "Large compendiums may take a while for PDF, please be patient.",
+        "withImages": "With images",
+        "withImagesHint": "Include images in the export (Markdown only)"
     }
 }

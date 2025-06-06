@@ -21,13 +21,11 @@ export class ExportAsMarkdown {
             return Object.entries(toc).map(([key, value]) => {
                 const heading = '#'.repeat(level) + ' ' + key;
                 if (Array.isArray(value) && value.length === 1) {
-                    const linkKey = parent.length > 0 ? parent.join('/') + '/' + key : key;
-                    const urlEncodedKey = encodeURIComponent(linkKey);
+                    const urlEncodedKey = parent.length > 0 ? parent.map(x => encodeURIComponent(x)).join('/') + '/' + encodeURIComponent(key) : encodeURIComponent(key);
                     return `- [${value[0]}](<./${urlEncodedKey}/${value[0].replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_')}.md>)`;
                 }
                 else if (Array.isArray(value)) {
-                    const linkKey = parent.length > 0 ? parent.join('/') + '/' + key : key;
-                    const urlEncodedKey = encodeURIComponent(linkKey);
+                    const urlEncodedKey = parent.length > 0 ? parent.map(x => encodeURIComponent(x)).join('/') + '/' + encodeURIComponent(key) : encodeURIComponent(key);
                     return `${heading}\n\n${value.map(page => `- [${page}](<./${urlEncodedKey}/${page.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_')}.md>)`).join('\n')}`;
                 } else {
                     return `${heading}\n\n${createTocMarkdown(value, level + 1, parent.concat(key))}`;
@@ -57,6 +55,16 @@ export class ExportAsMarkdown {
                 const sanitizedName = page.name.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_');
                 sanitizedPages.push(page.name);
                 zip.folder(path.join('/')).file(`${sanitizedName}.md`, page.markdown);
+
+                if (page.imageUrls.length > 0) {
+                    for (const url of page.imageUrls) {
+                        const response = await fetch(url);
+                        if (!response.ok) continue;
+                        const blob = await response.blob();
+                        const imageName = url.split('/').pop();
+                        zip.folder('asset').file(imageName, blob);
+                    }
+                }
             }
             foundry.utils.setProperty(toc, path.join('.'), sanitizedPages);
         }
@@ -68,6 +76,26 @@ export class ExportAsMarkdown {
             return this.buildPath(doc.folder, pack, path);
         }
         return path;
+    }
+
+    static getImageUrlsAndRerout(targetPack, currentDoc) {
+        // regex for src="" on img
+        const rgx = /<img[^>]+src="([^"]+)"[^>]*>/g;
+        return {
+            pattern: rgx,
+            enricher: async (match, options) => {
+                const src = match[1];
+                if (src.startsWith('http') || src.startsWith('data:')) {
+                    return match[0]; // external or data URI, do not change
+                }
+                
+                options.urls.push(src);
+                const newSrc = "./" + "../".repeat(options.pathLength + 1) + 'asset/' + src.split('/').pop();
+                console.log(src, newSrc, match[0]);
+                //replace the src in the match
+                return match[0].replace(src, newSrc);
+            }
+        }
     }
 
     static getLinkEnricher(targetPack, currentDoc) {
@@ -120,6 +148,7 @@ export class ExportAsMarkdown {
        
         for (let page of journal.pages) {
             let content = foundry.utils.getProperty(page, 'text.content');
+            const imageUrls = [];
             if (!content) continue;
 
             if (formData.removeLinks == 'convertLinks') {
@@ -128,6 +157,16 @@ export class ExportAsMarkdown {
                 for (const match of matches) {
                     const enrichedLink = await linkEnricher.enricher(match, {  });
                     content = content.replace(match[0], enrichedLink);
+                }
+            }
+
+            if (formData.withImages) {
+                
+                const imageEnricher = this.getImageUrlsAndRerout(pack, journal);
+                const matches = content.matchAll(imageEnricher.pattern);
+                for (const match of matches) {
+                    const changedImage = await imageEnricher.enricher(match, { urls: imageUrls, pathLength });
+                    content = content.replace(match[0], changedImage);
                 }
             }
 
@@ -146,16 +185,10 @@ export class ExportAsMarkdown {
 
             markdowns.push({
                 markdown,
-                name: page.name
+                name: page.name,
+                imageUrls
             })
         }
         return markdowns;
-    }
-
-    static #getTextNodes(parent) {
-        const text = [];
-        const walk = document.createTreeWalker(parent, NodeFilter.SHOW_TEXT);
-        while (walk.nextNode()) text.push(walk.currentNode);
-        return text;
     }
 }

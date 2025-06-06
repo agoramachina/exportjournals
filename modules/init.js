@@ -82,7 +82,7 @@ class Exporter extends foundry.applications.api.HandlebarsApplicationMixin(found
         window.receiveLogFromChild = this.receiveLogFromChild.bind(this);
         this.progress = ui.notifications.info('exportJournals.exportPDF', { progress: true, localize: true });
         const formData = new foundry.applications.ux.FormDataExtended(this.element.querySelector('form')).object;
-        await ExportAsPDF.exportPack(this.pack, formData, this.updateProgress.bind(this));
+        await ExportAsPDF.exportPack(this.pack, formData) //, this.updateProgress.bind(this));
         window.receiveLogFromChild = null;
         this.progress.update({
             message: 'exportJournals.exportPDF',
