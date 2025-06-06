@@ -91,7 +91,6 @@ export class ExportAsMarkdown {
                 
                 options.urls.push(src);
                 const newSrc = "./" + "../".repeat(options.pathLength + 1) + 'asset/' + src.split('/').pop();
-                console.log(src, newSrc, match[0]);
                 //replace the src in the match
                 return match[0].replace(src, newSrc);
             }
