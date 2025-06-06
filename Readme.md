@@ -13,7 +13,7 @@ Note that this is just for convenient reading. The PDF is not pretty.
 
 After installation, you'll find the "Export as Markdown" command in the context menu of journal compendiums.
 
-SCREENSHOT1
+![grafik](https://github.com/user-attachments/assets/8fb2f296-194d-4133-a3aa-57300c67f836)
 
 Once clicked, a window opens with the following options:
 - **Enrich**: When this option is active, Foundry Journal enrichers (e.g., `[[/Roll 1d10]]`) will be converted. If inactive, the enrichers will be copied to the export as they are.
@@ -23,7 +23,7 @@ Once clicked, a window opens with the following options:
     * Inactive: If inactive, the links will remain as they are in Foundry.
 - **Text field**: This shows information about the current export status for PDF exports.
 
-SCREENSHOT2
+![grafik](https://github.com/user-attachments/assets/ae01344f-8043-433b-8ff0-584c69fa399b)
 
 ### Markdown Export
 The Markdown export creates a folder for each journal, with journal pages saved as individual Markdown files.
