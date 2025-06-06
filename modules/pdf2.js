@@ -2,12 +2,11 @@ const { TextEditor } = foundry.applications.ux;
 
 export class ExportAsPDF {
     static async exportPack(pack, formData, callback) {
-        const allDocs = await pack.getDocuments();
+        const allDocs = (await pack.getDocuments()).sort((a, b) => a.sort ?? 0 - b.sort ?? 0);
         // Create a new PDF document
-
         const folders = { none: []}
 
-        for (const folder of pack.folders) {
+        for (const folder of Array.from(pack.folders).sort((a, b) => a.sort ?? 0 - b.sort ?? 0)) {
             for (let doc of allDocs.filter(d => d.folder === folder.id)) {
                 const pages = await this.convertJournalToHTML(doc, formData);
 
@@ -145,6 +144,7 @@ export class ExportAsPDF {
     static async convertJournalToHTML(journal, formData) {
         const htmlPages = [];
 
+        
         for (let page of journal.pages) {
             let content = foundry.utils.getProperty(page, 'text.content');
             if (!content) continue;
@@ -153,7 +153,7 @@ export class ExportAsPDF {
                 content = await TextEditor.enrichHTML(content);
             }
 
-            if (formData.removeLinks) {
+            if (formData.removeLinks.value == "removeLinks") {
                 content = content.replace(/<a[^>]*>(.*?)<\/a>/g, '$1');
             }
 

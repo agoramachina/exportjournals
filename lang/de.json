@@ -5,7 +5,10 @@
         "enrich": "Anreichern",
         "enrichHint": "Wende Foundry Enricher an (links,embeds, etc.)",
         "removeLinks": "Links entfernen",
-        "removeLinksHint": "Entferne alle Links aus dem Export.",
+        "removeLinksHint": "Entferne, behalte oder konvertiere alle Links aus dem Export.",
+        "convertLinks": "Links konvertieren",
+        "keepLinks": "Links behalten",
+        "linkHandling": "Linkbehandlung",
         "note": "Große Kompendien können bei PDF eine Weile dauern, Geduld bitte."
     }
 }

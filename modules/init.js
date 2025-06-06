@@ -73,7 +73,9 @@ class Exporter extends foundry.applications.api.HandlebarsApplicationMixin(found
     receiveLogFromChild(log) {
         this.history.push(log);
         this.history = this.history.slice(-3);
-        this.element.querySelector('.progress').textContent = this.history.join('\n');
+        const prog = this.element.querySelector('.progress')
+        prog.classList.remove('hidden');
+        prog.textContent = this.history.join('\n');
     }
 
     static async exportPDF(ev, target) {

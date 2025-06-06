@@ -8,14 +8,19 @@
             <p class="hint">{{localize 'exportJournals.enrichHint'}}</p>
         </div>
         <div class="form-group">
-            <label>{{localize 'exportJournals.removeLinks'}}</label>
+            <label>{{localize 'exportJournals.linkHandling'}}</label>
             <div class="form-fields">
-                <input type="checkbox" name="removeLinks" checked>
+                <select name="removeLinks">
+                    <option value="convertLinks">{{localize 'exportJournals.convertLinks'}}</option>
+                    <option value="removeLinks">{{localize 'exportJournals.removeLinks'}}</option>
+                    <option value="keepLinks">{{localize 'exportJournals.keepLinks'}}</option>
+                </select>
             </div>
             <p class="hint">{{localize 'exportJournals.removeLinksHint'}}</p>
         </div>
         <p>{{localize 'exportJournals.note'}}</p>
-        <code class="progress" style="overflow: scroll;">
+        <code class="progress hidden" style="overflow: scroll;">
+            
         </code>
         <div class="flexrow">
             <button type="button" data-action="exportMarkdown"><i class="fas fa-markdown"></i> {{localize 'exportJournals.exportMarkdown'}}</button>
