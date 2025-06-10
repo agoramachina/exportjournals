@@ -17,26 +17,13 @@ export class ExportAsMarkdown {
         }
 
         const expandedToc = foundry.utils.expandObject(toc);
-        const createTocMarkdown = (toc, level = 1, parent = []) => {
-            return Object.entries(toc).map(([key, value]) => {
-                const heading = '#'.repeat(level) + ' ' + key;
-                if (Array.isArray(value) && value.length === 1) {
-                    const urlEncodedKey = parent.length > 0 ? parent.map(x => encodeURIComponent(x)).join('/') + '/' + encodeURIComponent(key) : encodeURIComponent(key);
-                    return `- [${value[0]}](<./${urlEncodedKey}/${value[0].replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_')}.md>)`;
-                }
-                else if (Array.isArray(value)) {
-                    const urlEncodedKey = parent.length > 0 ? parent.map(x => encodeURIComponent(x)).join('/') + '/' + encodeURIComponent(key) : encodeURIComponent(key);
-                    return `${heading}\n\n${value.map(page => `- [${page}](<./${urlEncodedKey}/${page.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_')}.md>)`).join('\n')}`;
-                } else {
-                    return `${heading}\n\n${createTocMarkdown(value, level + 1, parent.concat(key))}`;
-                }
-            }).join('\n\n');
-        }
-
-        const tocMarkdown = createTocMarkdown(expandedToc);
+        
+        const tocMarkdown = this.createTocMarkdown(expandedToc);
         zip.file('TOC.md', tocMarkdown);
 
-        const name = pack.metadata.label || pack.metadata.name || pack.metadata.id;
+        this.generateSubfolderTOCs(expandedToc, zip, []);
+
+        const name = (pack.metadata.label || pack.metadata.name || pack.metadata.id).replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_');
         const blob = await zip.generateAsync({ type: "blob" });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -45,10 +32,57 @@ export class ExportAsMarkdown {
         URL.revokeObjectURL(link.href);
     }
 
+    static createTocMarkdown(toc, level = 1, parent = []) {
+        return Object.entries(toc).map(([key, value]) => {
+            const heading = '#'.repeat(level) + ' ' + key;
+            if (Array.isArray(value) && value.length === 1) {
+                const urlEncodedKey = parent.length > 0 ? parent.map(x => encodeURIComponent(x)).join('/') + '/' + encodeURIComponent(key) : encodeURIComponent(key);
+                return `- [${value[0]}](<./${urlEncodedKey}/${value[0].replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_')}.md>)`;
+            }
+            else if (Array.isArray(value)) {
+                const urlEncodedKey = parent.length > 0 ? parent.map(x => encodeURIComponent(x)).join('/') + '/' + encodeURIComponent(key) : encodeURIComponent(key);
+                return `${heading}\n\n${value.map(page => `- [${page}](<./${urlEncodedKey}/${page.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_')}.md>)`).join('\n')}`;
+            } else {
+                return `${heading}\n\n${this.createTocMarkdown(value, level + 1, parent.concat(key))}`;
+            }
+        }).join('\n\n');
+    }
+
+    static generateSubfolderTOCs(toc, zip, path = []) {
+        Object.entries(toc).forEach(([key, value]) => {
+            const currentPath = [...path, key];
+            if (!Array.isArray(value)) {
+                const folderToc = this.createSubfolderTocMarkdown(value);
+                const goUp = '../'.repeat(currentPath.length);
+                const folderContent = `[TOC](<./${goUp}TOC.md>)\n\n${folderToc}`;
+                zip.folder(currentPath.join('/')).file('TOC.md', folderContent);
+                this.generateSubfolderTOCs(value, zip, currentPath);
+            }
+        });
+    }
+    
+    static createSubfolderTocMarkdown(toc, level = 1, parent = []) {
+        return Object.entries(toc).map(([key, value]) => {
+            const heading = '#'.repeat(level) + ' ' + key;
+            if (Array.isArray(value) && value.length === 1) {
+                const sanitizedName = value[0].replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_');
+                return `- [${value[0]}](<./${key}/${sanitizedName}.md>)`;
+            }
+            else if (Array.isArray(value)) {
+                return `${heading}\n\n${value.map(page => {
+                    const sanitizedName = page.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g, '_');
+                    return `- [${page}](<./${key}/${sanitizedName}.md>)`;
+                }).join('\n')}`;
+            } else {
+                return `${heading}\n\n${this.createSubfolderTocMarkdown(value, level + 1, parent.concat(key))}`;
+            }
+        }).join('\n\n');
+    }
+
     static async handleFolderDocs(allDocs, formData, zip, pack, toc) {
         for (let doc of allDocs.sort((a, b) => a.sort ?? 0 - b.sort ?? 0)) {
             const path = this.buildPath(doc, pack, []);
-            const pages = await this.convertJournalToMarkdown(doc, formData, pack, path.length);
+            const pages = await this.convertJournalToMarkdown(doc, formData, pack, path);
             path.push(doc.name);
             const sanitizedPages = []
             for (let page of pages) {
@@ -140,9 +174,9 @@ export class ExportAsMarkdown {
         }
     }
 
-    static async convertJournalToMarkdown(journal, formData, pack, pathLength) {
+    static async convertJournalToMarkdown(journal, formData, pack, path) {
         const converter = foundry.applications.sheets.journal.JournalEntryPageTextSheet._converter
-
+        const pathLength = path.length;
         const markdowns = []
        
         for (let page of journal.pages) {
@@ -179,8 +213,14 @@ export class ExportAsMarkdown {
 
             let markdown = converter.makeMarkdown(content)
 
-            const goUp = '../'.repeat(pathLength + 1);
-            markdown = `[TOC](<./${goUp}TOC.md>)\n\n` + markdown;
+            const baseToc = `[TOC](<./${'../'.repeat(pathLength + 1)}/TOC.md>)`;
+            let breadcrumb = [baseToc];
+            for (let i = 0; i < pathLength; i++) {
+                const goUps = '../'.repeat(pathLength - i);
+                breadcrumb.push(`[${path[i]}](<./${goUps}TOC.md>)`);
+            }
+
+            markdown = `${breadcrumb.join(" / ")}\n\n` + markdown;
 
             markdowns.push({
                 markdown,

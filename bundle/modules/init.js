@@ -1,28 +1,37 @@
-var C=Object.defineProperty;var U=(u,e,t)=>e in u?C(u,e,{enumerable:!0,configurable:!0,writable:!0,value:t}):u[e]=t;var y=(u,e)=>C(u,"name",{value:e,configurable:!0});var T=(u,e,t)=>(U(u,typeof e!="symbol"?e+"":e,t),t);var{TextEditor:j}=foundry.applications.ux,b=class{static async exportPack(e,t){let n=await e.getDocuments(),c=new JSZip,i=n.filter(r=>!r.folder),m={};await this.handleFolderDocs(i,t,c,e,m);for(let r of Array.from(e.folders).sort((l,d)=>l.sort??0-d.sort??0)){let l=n.filter(d=>d.folder===r);l.length!==0&&await this.handleFolderDocs(l,t,c,e,m)}let p=foundry.utils.expandObject(m),s=y((r,l=1,d=[])=>Object.entries(r).map(([f,w])=>{let P="#".repeat(l)+" "+f;if(Array.isArray(w)&&w.length===1){let L=d.length>0?d.map(x=>encodeURIComponent(x)).join("/")+"/"+encodeURIComponent(f):encodeURIComponent(f);return`- [${w[0]}](<./${L}/${w[0].replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_")}.md>)`}else if(Array.isArray(w)){let L=d.length>0?d.map(x=>encodeURIComponent(x)).join("/")+"/"+encodeURIComponent(f):encodeURIComponent(f);return`${P}
+var C=Object.defineProperty;var P=(u,e,t)=>e in u?C(u,e,{enumerable:!0,configurable:!0,writable:!0,value:t}):u[e]=t;var w=(u,e)=>C(u,"name",{value:e,configurable:!0});var x=(u,e,t)=>(P(u,typeof e!="symbol"?e+"":e,t),t);var{TextEditor:j}=foundry.applications.ux,y=class{static async exportPack(e,t){let n=await e.getDocuments(),r=new JSZip,o=n.filter(i=>!i.folder),s={};await this.handleFolderDocs(o,t,r,e,s);for(let i of Array.from(e.folders).sort((l,m)=>l.sort??0-m.sort??0)){let l=n.filter(m=>m.folder===i);l.length!==0&&await this.handleFolderDocs(l,t,r,e,s)}let c=foundry.utils.expandObject(s),d=this.createTocMarkdown(c);r.file("TOC.md",d),this.generateSubfolderTOCs(c,r,[]);let p=(e.metadata.label||e.metadata.name||e.metadata.id).replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_"),f=await r.generateAsync({type:"blob"}),a=document.createElement("a");a.href=URL.createObjectURL(f),a.download=`${p}.zip`,a.click(),URL.revokeObjectURL(a.href)}static createTocMarkdown(e,t=1,n=[]){return Object.entries(e).map(([r,o])=>{let s="#".repeat(t)+" "+r;if(Array.isArray(o)&&o.length===1){let c=n.length>0?n.map(d=>encodeURIComponent(d)).join("/")+"/"+encodeURIComponent(r):encodeURIComponent(r);return`- [${o[0]}](<./${c}/${o[0].replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_")}.md>)`}else if(Array.isArray(o)){let c=n.length>0?n.map(d=>encodeURIComponent(d)).join("/")+"/"+encodeURIComponent(r):encodeURIComponent(r);return`${s}
 
-${w.map(x=>`- [${x}](<./${L}/${x.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_")}.md>)`).join(`
-`)}`}else return`${P}
+${o.map(d=>`- [${d}](<./${c}/${d.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_")}.md>)`).join(`
+`)}`}else return`${s}
 
-${s(w,l+1,d.concat(f))}`}).join(`
+${this.createTocMarkdown(o,t+1,n.concat(r))}`}).join(`
 
-`),"createTocMarkdown"),g=s(p);c.file("TOC.md",g);let h=e.metadata.label||e.metadata.name||e.metadata.id,a=await c.generateAsync({type:"blob"}),o=document.createElement("a");o.href=URL.createObjectURL(a),o.download=`${h}.zip`,o.click(),URL.revokeObjectURL(o.href)}static async handleFolderDocs(e,t,n,c,i){for(let m of e.sort((p,s)=>p.sort??0-s.sort??0)){let p=this.buildPath(m,c,[]),s=await this.convertJournalToMarkdown(m,t,c,p.length);p.push(m.name);let g=[];for(let h of s){let a=h.name.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_");if(g.push(h.name),n.folder(p.join("/")).file(`${a}.md`,h.markdown),h.imageUrls.length>0)for(let o of h.imageUrls){let r=await fetch(o);if(!r.ok)continue;let l=await r.blob(),d=o.split("/").pop();n.folder("asset").file(d,l)}}foundry.utils.setProperty(i,p.join("."),g)}}static buildPath(e,t,n){return e.folder?(n.unshift(e.folder.name),this.buildPath(e.folder,t,n)):n}static getImageUrlsAndRerout(e,t){return{pattern:/<img[^>]+src="([^"]+)"[^>]*>/g,enricher:async(c,i)=>{let m=c[1];if(m.startsWith("http")||m.startsWith("data:"))return c[0];i.urls.push(m);let p="./"+"../".repeat(i.pathLength+1)+"asset/"+m.split("/").pop();return c[0].replace(m,p)}}}static getLinkEnricher(e,t){let n=["Compendium","UUID"];return{pattern:new RegExp(`@(${n.join("|")})\\[([^#\\]]+)(?:#([^\\]]+))?](?:{([^}]+)})?`,"g"),enricher:async(i,m)=>{let[p,s,g,h]=i.slice(1,5),a;if(p==="UUID")a=await foundry.utils.fromUuid(s);else if(p==="Compendium"){let{collection:o,id:r}=foundry.utils.parseUuid(`Compendium.${s}`)??{};r&&o&&(o.index.has(r)?a=await o.getDocument(r):a=await o.getName(r))}if(a&&a.pack==e.metadata.id){let r=b.buildPath(a,e,[]).map(P=>encodeURIComponent(P)),l=b.buildPath(t,e,[]),d=a.name;a.documentName=="JournalEntry"&&(r.push(encodeURIComponent(a.name)),d=Array.from(a.pages)[0].name);let f=l.length>1?"../".repeat(l.length+1):"",w=d.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_");return`<a href="./${f}${r.join("/")}/${w}.md">${h||a.name}</a>`}return i[0]}}}static async convertJournalToMarkdown(e,t,n,c){let i=foundry.applications.sheets.journal.JournalEntryPageTextSheet._converter,m=[];for(let p of e.pages){let s=foundry.utils.getProperty(p,"text.content"),g=[];if(!s)continue;if(t.removeLinks=="convertLinks"){let o=this.getLinkEnricher(n,e),r=s.matchAll(o.pattern);for(let l of r){let d=await o.enricher(l,{});s=s.replace(l[0],d)}}if(t.withImages){let o=this.getImageUrlsAndRerout(n,e),r=s.matchAll(o.pattern);for(let l of r){let d=await o.enricher(l,{urls:g,pathLength:c});s=s.replace(l[0],d)}}t.enrich&&(s=await j.enrichHTML(s)),t.removeLinks=="removeLinks"&&(s=s.replace(/<a[^>]*>(.*?)<\/a>/g,"$1"));let h=i.makeMarkdown(s);h=`[TOC](<./${"../".repeat(c+1)}TOC.md>)
+`)}static generateSubfolderTOCs(e,t,n=[]){Object.entries(e).forEach(([r,o])=>{let s=[...n,r];if(!Array.isArray(o)){let c=this.createSubfolderTocMarkdown(o),p=`[TOC](<./${"../".repeat(s.length)}TOC.md>)
 
-`+h,m.push({markdown:h,name:p.name,imageUrls:g})}return m}};y(b,"ExportAsMarkdown");var{TextEditor:F}=foundry.applications.ux,v=class{static async exportPack(e,t,n){let c=(await e.getDocuments()).sort((a,o)=>a.sort??0-o.sort??0),i={none:[]};for(let a of Array.from(e.folders).sort((o,r)=>o.sort??0-r.sort??0))for(let o of c.filter(r=>r.folder===a)){let l=(await this.convertJournalToHTML(o,t)).map(f=>`
-                        <h3>${f.name}</h3>
-                        ${f.html}
-                    <div class="page_break"></div>`).join(""),d=`
-                    <h2>${o.name}</h2>
-                    ${l}
-                    <div class="page_break"></div>`;i[a.id]=i[a.id]||[],i[a.id].push(d)}for(let a of c.filter(o=>!o.folder)){let r=(await this.convertJournalToHTML(a,t)).map(d=>`
-                        <h3>${d.name}</h3>
-                        ${d.html}
-                    <div class="page_break"></div>`).join(""),l=`
+${c}`;t.folder(s.join("/")).file("TOC.md",p),this.generateSubfolderTOCs(o,t,s)}})}static createSubfolderTocMarkdown(e,t=1,n=[]){return Object.entries(e).map(([r,o])=>{let s="#".repeat(t)+" "+r;if(Array.isArray(o)&&o.length===1){let c=o[0].replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_");return`- [${o[0]}](<./${r}/${c}.md>)`}else return Array.isArray(o)?`${s}
+
+${o.map(c=>{let d=c.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_");return`- [${c}](<./${r}/${d}.md>)`}).join(`
+`)}`:`${s}
+
+${this.createSubfolderTocMarkdown(o,t+1,n.concat(r))}`}).join(`
+
+`)}static async handleFolderDocs(e,t,n,r,o){for(let s of e.sort((c,d)=>c.sort??0-d.sort??0)){let c=this.buildPath(s,r,[]),d=await this.convertJournalToMarkdown(s,t,r,c);c.push(s.name);let p=[];for(let f of d){let a=f.name.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_");if(p.push(f.name),n.folder(c.join("/")).file(`${a}.md`,f.markdown),f.imageUrls.length>0)for(let i of f.imageUrls){let l=await fetch(i);if(!l.ok)continue;let m=await l.blob(),h=i.split("/").pop();n.folder("asset").file(h,m)}}foundry.utils.setProperty(o,c.join("."),p)}}static buildPath(e,t,n){return e.folder?(n.unshift(e.folder.name),this.buildPath(e.folder,t,n)):n}static getImageUrlsAndRerout(e,t){return{pattern:/<img[^>]+src="([^"]+)"[^>]*>/g,enricher:async(r,o)=>{let s=r[1];if(s.startsWith("http")||s.startsWith("data:"))return r[0];o.urls.push(s);let c="./"+"../".repeat(o.pathLength+1)+"asset/"+s.split("/").pop();return r[0].replace(s,c)}}}static getLinkEnricher(e,t){let n=["Compendium","UUID"];return{pattern:new RegExp(`@(${n.join("|")})\\[([^#\\]]+)(?:#([^\\]]+))?](?:{([^}]+)})?`,"g"),enricher:async(o,s)=>{let[c,d,p,f]=o.slice(1,5),a;if(c==="UUID")a=await foundry.utils.fromUuid(d);else if(c==="Compendium"){let{collection:i,id:l}=foundry.utils.parseUuid(`Compendium.${d}`)??{};l&&i&&(i.index.has(l)?a=await i.getDocument(l):a=await i.getName(l))}if(a&&a.pack==e.metadata.id){let l=y.buildPath(a,e,[]).map(L=>encodeURIComponent(L)),m=y.buildPath(t,e,[]),h=a.name;a.documentName=="JournalEntry"&&(l.push(encodeURIComponent(a.name)),h=Array.from(a.pages)[0].name);let g=m.length>1?"../".repeat(m.length+1):"",$=h.replace(/[^a-zA-Z0-9-_äöüÄÖÜß]/g,"_");return`<a href="./${g}${l.join("/")}/${$}.md">${f||a.name}</a>`}return o[0]}}}static async convertJournalToMarkdown(e,t,n,r){let o=foundry.applications.sheets.journal.JournalEntryPageTextSheet._converter,s=r.length,c=[];for(let d of e.pages){let p=foundry.utils.getProperty(d,"text.content"),f=[];if(!p)continue;if(t.removeLinks=="convertLinks"){let m=this.getLinkEnricher(n,e),h=p.matchAll(m.pattern);for(let g of h){let $=await m.enricher(g,{});p=p.replace(g[0],$)}}if(t.withImages){let m=this.getImageUrlsAndRerout(n,e),h=p.matchAll(m.pattern);for(let g of h){let $=await m.enricher(g,{urls:f,pathLength:s});p=p.replace(g[0],$)}}t.enrich&&(p=await j.enrichHTML(p)),t.removeLinks=="removeLinks"&&(p=p.replace(/<a[^>]*>(.*?)<\/a>/g,"$1"));let a=o.makeMarkdown(p),l=[`[TOC](<./${"../".repeat(s+1)}/TOC.md>)`];for(let m=0;m<s;m++){let h="../".repeat(s-m);l.push(`[${r[m]}](<./${h}TOC.md>)`)}a=`${l.join(" / ")}
+
+`+a,c.push({markdown:a,name:d.name,imageUrls:f})}return c}};w(y,"ExportAsMarkdown");var{TextEditor:v}=foundry.applications.ux,T=class{static async exportPack(e,t,n){let r=(await e.getDocuments()).sort((a,i)=>a.sort??0-i.sort??0),o={none:[]};for(let a of Array.from(e.folders).sort((i,l)=>i.sort??0-l.sort??0))for(let i of r.filter(l=>l.folder===a)){let m=(await this.convertJournalToHTML(i,t)).map(g=>`
+                        <h3>${g.name}</h3>
+                        ${g.html}
+                    <div class="page_break"></div>`).join(""),h=`
+                    <h2>${i.name}</h2>
+                    ${m}
+                    <div class="page_break"></div>`;o[a.id]=o[a.id]||[],o[a.id].push(h)}for(let a of r.filter(i=>!i.folder)){let l=(await this.convertJournalToHTML(a,t)).map(h=>`
+                        <h3>${h.name}</h3>
+                        ${h.html}
+                    <div class="page_break"></div>`).join(""),m=`
                     <h2>${a.name}</h2>
-                    ${r}
-                    <div class="page_break"></div>`;i.none.push(l)}let m=Object.entries(i).map(([a,o])=>{let r=e.folders.get(a);return`<div class="folder">
-                <h1>${r?r.name:""}</h1>
-                ${o.join("")}
-            </div>`}).join(""),p=e.metadata.label||e.metadata.name||e.metadata.id;window.HTML3PDFprogressCallback=n;let s=window.open("","_blank","width=800,height=600"),h=`
+                    ${l}
+                    <div class="page_break"></div>`;o.none.push(m)}let s=Object.entries(o).map(([a,i])=>{let l=e.folders.get(a);return`<div class="folder">
+                <h1>${l?l.name:""}</h1>
+                ${i.join("")}
+            </div>`}).join(""),c=e.metadata.label||e.metadata.name||e.metadata.id;window.HTML3PDFprogressCallback=n;let d=window.open("","_blank","width=800,height=600"),f=`
     <html>
         <head>
             <title>Generating PDF</title>
@@ -43,14 +52,14 @@ ${s(w,l+1,d.concat(f))}`}).join(`
                     .page_break {
                         page-break-after: always;
                     }
-                        ${t.foundryStyles?Array.from(document.styleSheets).map(a=>{try{return Array.from(a.cssRules).filter(o=>!(o instanceof CSSStyleRule)||!o.selectorText.includes("body")).map(o=>o.cssText).join(`
+                        ${t.foundryStyles?Array.from(document.styleSheets).map(a=>{try{return Array.from(a.cssRules).filter(i=>!(i instanceof CSSStyleRule)||!i.selectorText.includes("body")).map(i=>i.cssText).join(`
 `)}catch{return""}}).join(`
 `):""}
             </style>
         </head>
         <body>
             <div id="pdf-content">
-                ${m}
+                ${s}
             </div>
             <script>
             const originalLog = console.debug;
@@ -64,7 +73,7 @@ ${s(w,l+1,d.concat(f))}`}).join(`
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     const el = document.getElementById("pdf-content");
                     html3pdf().set({
-                        filename: "${p}.pdf",
+                        filename: "${c}.pdf",
                         margin: 1,
                         pagebreak: { mode: ['avoid-all', 'css', 'legacy'], elementType: 'div', className: 'page_break' },
                         html2canvas: { scale: 2 },
@@ -74,5 +83,5 @@ ${s(w,l+1,d.concat(f))}`}).join(`
             <\/script>
         </body>
     </html>
-`;for(s.document.open(),s.document.write(h),s.document.close();!s.closed;)console.log("Waiting for the window to close..."),await new Promise(a=>setTimeout(a,1e3));window.HTML3PDFprogressCallback=null}static buildPath(e,t,n){return e.folder?(n.unshift(e.folder.name),this.buildPath(e.folder,t,n)):n}static async convertJournalToHTML(e,t){let n=[];for(let c of e.pages){let i=foundry.utils.getProperty(c,"text.content");!i||(t.enrich&&(i=await F.enrichHTML(i)),t.removeLinks.value=="removeLinks"&&(i=i.replace(/<a[^>]*>(.*?)<\/a>/g,"$1")),n.push({html:i,name:c.name}))}return n}};y(v,"ExportAsPDF");Hooks.on("getCompendiumContextOptions",(u,e)=>{if(!game.user.isGM)return!1;let t=y(n=>{let c=n.dataset.pack;return game.packs.get(c)?.documentName=="JournalEntry"},"condition");e.push({name:"exportJournals.exportMarkdown",icon:'<i class="fas fa-markdown"></i>',condition:t,callback:n=>D(n)})});async function D(u){let e=u.dataset.pack,t=game.packs.get(e);new k(t).render(!0)}y(D,"exportCompendium");var $=class extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2){constructor(e){super(),this.pack=e,this.history=[]}get title(){return this.pack.metadata.label||this.pack.metadata.name||this.pack.metadata.id}static exportMarkdown(e,t){let n=new foundry.applications.ux.FormDataExtended(this.element.querySelector("form")).object;b.exportPack(this.pack,n),this.close()}updateProgress(e){this.progress.update({message:"exportJournals.exportPDF",localize:!0,pct:e.val/e.n})}receiveLogFromChild(e){this.history.push(e),this.history=this.history.slice(-3);let t=this.element.querySelector(".progress");t.classList.remove("hidden"),t.textContent=this.history.join(`
-`)}static async exportPDF(e,t){window.receiveLogFromChild=this.receiveLogFromChild.bind(this),this.progress=ui.notifications.info("exportJournals.exportPDF",{progress:!0,localize:!0});let n=new foundry.applications.ux.FormDataExtended(this.element.querySelector("form")).object;await v.exportPack(this.pack,n),window.receiveLogFromChild=null,this.progress.update({message:"exportJournals.exportPDF",localize:!0,progress:1}),this.close()}},k=$;y(k,"Exporter"),T(k,"PARTS",{main:{template:"modules/exportjournals/templates/exporter.hbs",root:!0}}),T(k,"DEFAULT_OPTIONS",{actions:{exportMarkdown:$.exportMarkdown,exportPDF:$.exportPDF},position:{width:500},window:{contentClasses:["standard-form"]}});
+`;for(d.document.open(),d.document.write(f),d.document.close();!d.closed;)console.log("Waiting for the window to close..."),await new Promise(a=>setTimeout(a,1e3));window.HTML3PDFprogressCallback=null}static buildPath(e,t,n){return e.folder?(n.unshift(e.folder.name),this.buildPath(e.folder,t,n)):n}static async convertJournalToHTML(e,t){let n=[];for(let r of e.pages){let o=foundry.utils.getProperty(r,"text.content");!o||(t.enrich&&(o=await v.enrichHTML(o)),t.removeLinks.value=="removeLinks"&&(o=o.replace(/<a[^>]*>(.*?)<\/a>/g,"$1")),n.push({html:o,name:r.name}))}return n}};w(T,"ExportAsPDF");Hooks.on("getCompendiumContextOptions",(u,e)=>{if(!game.user.isGM)return!1;let t=w(n=>{let r=n.dataset.pack;return game.packs.get(r)?.documentName=="JournalEntry"},"condition");e.push({name:"exportJournals.exportMarkdown",icon:'<i class="fas fa-markdown"></i>',condition:t,callback:n=>U(n)})});async function U(u){let e=u.dataset.pack,t=game.packs.get(e);new b(t).render(!0)}w(U,"exportCompendium");var k=class extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2){constructor(e){super(),this.pack=e,this.history=[]}get title(){return this.pack.metadata.label||this.pack.metadata.name||this.pack.metadata.id}static exportMarkdown(e,t){let n=new foundry.applications.ux.FormDataExtended(this.element.querySelector("form")).object;y.exportPack(this.pack,n),this.close()}updateProgress(e){this.progress.update({message:"exportJournals.exportPDF",localize:!0,pct:e.val/e.n})}receiveLogFromChild(e){this.history.push(e),this.history=this.history.slice(-3);let t=this.element.querySelector(".progress");t.classList.remove("hidden"),t.textContent=this.history.join(`
+`)}static async exportPDF(e,t){window.receiveLogFromChild=this.receiveLogFromChild.bind(this),this.progress=ui.notifications.info("exportJournals.exportPDF",{progress:!0,localize:!0});let n=new foundry.applications.ux.FormDataExtended(this.element.querySelector("form")).object;await T.exportPack(this.pack,n),window.receiveLogFromChild=null,this.progress.update({message:"exportJournals.exportPDF",localize:!0,progress:1}),this.close()}},b=k;w(b,"Exporter"),x(b,"PARTS",{main:{template:"modules/exportjournals/templates/exporter.hbs",root:!0}}),x(b,"DEFAULT_OPTIONS",{actions:{exportMarkdown:k.exportMarkdown,exportPDF:k.exportPDF},position:{width:500},window:{contentClasses:["standard-form"]}});
