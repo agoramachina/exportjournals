@@ -31,7 +31,7 @@ The Markdown export creates a folder for each journal, with journal pages saved 
 The Markdown files can then be opened and read by any program (e.g., Obsidian).
 
 ### PDF Export
-The PDF export creates a PDF file containing all journals with their pages in sequence.
+The PDF export creates a PDF file containing all journals with their pages in sequence (currently slow and experimental).
 
 ## Permissions
 The command can only be used with the GM role!
