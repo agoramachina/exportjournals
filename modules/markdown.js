@@ -1,4 +1,4 @@
-const { TextEditor } = foundry.applications.ux;
+const { TextEditor } = foundry.applications.ux || {};
 
 export class ExportAsMarkdown {
     static async exportPack(pack, formData) {
@@ -175,7 +175,11 @@ export class ExportAsMarkdown {
     }
 
     static async convertJournalToMarkdown(journal, formData, pack, path) {
-        const converter = foundry.applications.sheets.journal.JournalEntryPageTextSheet._converter
+        // Use different converter approach for v12
+        const converter = game.system?.documentTypes?.JournalEntryPage?.htmlConverter || 
+                         foundry.applications.sheets.journal.JournalEntryPageTextSheet?._converter ||
+                         this.getBasicMarkdownConverter();
+        
         const pathLength = path.length;
         const markdowns = []
        
@@ -204,14 +208,20 @@ export class ExportAsMarkdown {
             }
 
             if (formData.enrich) {
-                content = await TextEditor.enrichHTML(content)
+                // Use enrichHTML if available, otherwise use basic enricher
+                if (TextEditor?.enrichHTML) {
+                    content = await TextEditor.enrichHTML(content);
+                } else if (game.system?.data?.template?.Item) {
+                    // Basic enrichment for v12
+                    content = await this.basicEnrichHTML(content);
+                }
             }
 
             if (formData.removeLinks == "removeLinks") {
                 content = content.replace(/<a[^>]*>(.*?)<\/a>/g, '$1');
             }
 
-            let markdown = converter.makeMarkdown(content)
+            let markdown = converter.makeMarkdown ? converter.makeMarkdown(content) : this.htmlToMarkdown(content);
 
             const baseToc = `[TOC](<./${'../'.repeat(pathLength + 1)}/TOC.md>)`;
             let breadcrumb = [baseToc];
@@ -229,5 +239,40 @@ export class ExportAsMarkdown {
             })
         }
         return markdowns;
+    }
+
+    static getBasicMarkdownConverter() {
+        return {
+            makeMarkdown: (html) => this.htmlToMarkdown(html)
+        };
+    }
+
+    static htmlToMarkdown(html) {
+        // Basic HTML to Markdown conversion for v12 compatibility
+        return html
+            .replace(/<h([1-6])>/g, (match, level) => '#'.repeat(parseInt(level)) + ' ')
+            .replace(/<\/h[1-6]>/g, '\n\n')
+            .replace(/<p>/g, '')
+            .replace(/<\/p>/g, '\n\n')
+            .replace(/<br\s*\/?>/g, '\n')
+            .replace(/<strong>/g, '**')
+            .replace(/<\/strong>/g, '**')
+            .replace(/<em>/g, '*')
+            .replace(/<\/em>/g, '*')
+            .replace(/<ul>/g, '')
+            .replace(/<\/ul>/g, '\n')
+            .replace(/<ol>/g, '')
+            .replace(/<\/ol>/g, '\n')
+            .replace(/<li>/g, '- ')
+            .replace(/<\/li>/g, '\n')
+            .replace(/<a[^>]*href="([^"]*)"[^>]*>/g, '[')
+            .replace(/<\/a>/g, ']($1)')
+            .replace(/\n\n\n+/g, '\n\n');
+    }
+
+    static async basicEnrichHTML(content) {
+        // Basic enrichment for v12 - mainly just return content as-is
+        // More sophisticated enrichment would require specific v12 APIs
+        return content;
     }
 }

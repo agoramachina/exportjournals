@@ -1,4 +1,4 @@
-const { TextEditor } = foundry.applications.ux;
+const { TextEditor } = foundry.applications.ux || {};
 
 export class ExportAsPDF {
     static async exportPack(pack, formData, callback) {
@@ -150,10 +150,16 @@ export class ExportAsPDF {
             if (!content) continue;
 
             if (formData.enrich) {
-                content = await TextEditor.enrichHTML(content);
+                // Use enrichHTML if available, otherwise use basic enricher for v12
+                if (TextEditor?.enrichHTML) {
+                    content = await TextEditor.enrichHTML(content);
+                } else {
+                    // Basic enrichment for v12 - mainly just return content as-is
+                    content = await this.basicEnrichHTML(content);
+                }
             }
 
-            if (formData.removeLinks.value == "removeLinks") {
+            if (formData.removeLinks == "removeLinks") {
                 content = content.replace(/<a[^>]*>(.*?)<\/a>/g, '$1');
             }
 
@@ -164,5 +170,10 @@ export class ExportAsPDF {
         }
         return htmlPages;
     }
-}
 
+    static async basicEnrichHTML(content) {
+        // Basic enrichment for v12 - mainly just return content as-is
+        // More sophisticated enrichment would require specific v12 APIs
+        return content;
+    }
+}
